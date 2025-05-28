@@ -48,6 +48,13 @@ class VAE(nn.Module):
         #   nelbo, kl, rec
         ################################################################################
         ### START CODE HERE ###
+        m_z, v_z = self.enc(x)
+        z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(x | z)
+        log_prob_x = ut.log_bernoulli_with_logits(x, self.dec(z)) # logp_\theta(x | z)
+        rec = -torch.mean(log_prob_x)
+        kl = torch.mean(ut.kl_normal(m_z, v_z, *self.z_prior))
+        nelbo = kl + rec
+        return nelbo, kl, rec
         ### END CODE HERE ###
         ################################################################################
         # End of code modification
@@ -83,6 +90,7 @@ class VAE(nn.Module):
         # calculating log_normal w.r.t prior and q
         ################################################################################
         ### START CODE HERE ###
+
         ### END CODE HERE ###
         ################################################################################
         # End of code modification
