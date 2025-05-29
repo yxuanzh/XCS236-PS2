@@ -61,7 +61,8 @@ class GMVAE(nn.Module):
         ### START CODE HERE ###
         z = self.sample_z(x.shape[0]) # z ~ q_\phi(z)
         m_z, v_z = self.enc(x)
-        log_prob_x = ut.log_bernoulli_with_logits(x, self.compute_sigmoid_given(z)) # logp_\theta(x | z)
+        z = z * v_z + m_z
+        log_prob_x = ut.log_bernoulli_with_logits(x, self.dec(z)) # logp_\theta(x | z)
         rec = -torch.mean(log_prob_x)
         kl =  torch.mean(ut.log_normal(z, m_z, v_z) - ut.log_normal_mixture(z, *prior))
         nelbo = kl + rec

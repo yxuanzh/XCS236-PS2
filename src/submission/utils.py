@@ -116,10 +116,10 @@ def log_normal_mixture(z, m, v):
     # in the batch
     ################################################################################
     ### START CODE HERE ###
-    total = 0
-    for i in range(m.shape[1]):
-        total += torch.exp(torch.distributions.multivariate_normal.MultivariateNormal(m[:,i,:], torch.diag_embed(v[:,i,:])).log_prob(z))
-    return torch.log(total/m.shape[1])
+    samples_prob = torch.distributions.multivariate_normal.MultivariateNormal(m, torch.diag_embed(v)).log_prob(z.unsqueeze(1))
+    log_sum_exp_res = torch.logsumexp(samples_prob, dim=1)
+    log_prob = log_sum_exp_res - torch.log(torch.tensor(m.shape[1]))
+    return log_prob
     ### END CODE HERE ###
     ################################################################################
     # End of code modification

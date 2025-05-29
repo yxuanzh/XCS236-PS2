@@ -49,7 +49,7 @@ class VAE(nn.Module):
         ################################################################################
         ### START CODE HERE ###
         m_z, v_z = self.enc(x)
-        z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(x | z)
+        z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x)
         log_prob_x = ut.log_bernoulli_with_logits(x, self.dec(z)) # logp_\theta(x | z)
         rec = -torch.mean(log_prob_x)
         kl = torch.mean(ut.kl_normal(m_z, v_z, *self.z_prior))
