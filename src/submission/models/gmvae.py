@@ -59,9 +59,8 @@ class GMVAE(nn.Module):
         # this object by checking its shape.
         prior = ut.gaussian_parameters(self.z_pre, dim=1)
         ### START CODE HERE ###
-        z = self.sample_z(x.shape[0]) # z ~ q_\phi(z)
         m_z, v_z = self.enc(x)
-        z = z * v_z + m_z
+        z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x)
         log_prob_x = ut.log_bernoulli_with_logits(x, self.dec(z)) # logp_\theta(x | z)
         rec = -torch.mean(log_prob_x)
         kl =  torch.mean(ut.log_normal(z, m_z, v_z) - ut.log_normal_mixture(z, *prior))
