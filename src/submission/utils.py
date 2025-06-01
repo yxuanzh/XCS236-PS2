@@ -89,7 +89,7 @@ def log_normal(x, m, v):
     # the last dimension
     ################################################################################
     ### START CODE HERE ###
-    dist = torch.distributions.multivariate_normal.MultivariateNormal(m, torch.diag_embed(v)).to(m.device)
+    dist = torch.distributions.multivariate_normal.MultivariateNormal(m, torch.diag_embed(v))
     return dist.log_prob(x).to(m.device)
     ### END CODE HERE ###
     ################################################################################
