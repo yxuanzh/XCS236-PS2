@@ -83,6 +83,27 @@ class SSVAE(nn.Module):
         y = x.new(np.eye(self.y_dim)[y])
         x = ut.duplicate(x, self.y_dim)
         ### START CODE HERE ###
+        m_z, v_z = self.enc(x, y)
+        z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x, y)
+        log_prob_x = ut.log_bernoulli_with_logits(x, self.dec(z, y)) # logp_\theta(x | z, y) shape: shape * z_dim
+        prob_y_on_x = torch.einsum("ijk,ik->ij", y.view(-1, self.y_dim, self.y_dim), y_prob) # q_\phi(y|x) shape:(batch, z_dim)
+
+        # rec
+        rec = -torch.einsum("ij,ij->i", prob_y_on_x, log_prob_x.view(-1, self.y_dim))
+        rec_mean = torch.mean(rec)
+
+        # calc kl
+        kl_z = ut.kl_normal(m_z, v_z, torch.ones_like(z) * self.z_prior_m, torch.ones_like(z) * self.z_prior_v)
+        weighted_kl_z = torch.einsum("ij,ij->i", prob_y_on_x, kl_z.view(-1, self.y_dim)) # \sum_{y \ in Y} q_\phi(y|x) * kl_z
+        kl_y = ut.kl_cat(y_prob, y_logprob, -torch.log(torch.tensor(self.y_dim))) # shape: batch
+        kl = kl_y + weighted_kl_z
+
+        kl_mean = torch.mean(kl)
+        kl_z_mean = torch.mean(weighted_kl_z)
+        kl_y_mean = torch.mean(kl_y)
+        
+        nelbo = kl_mean + rec_mean
+        return nelbo, kl_z_mean, kl_y_mean, rec
         ### END CODE HERE ###
         ################################################################################
         # End of code modification

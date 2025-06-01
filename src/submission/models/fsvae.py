@@ -54,6 +54,19 @@ class FSVAE(nn.Module):
         #   nelbo, kl_z, rec
         ################################################################################
         ### START CODE HERE ###
+        m_z, v_z = self.enc(x, y)
+        z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x, y)
+        log_prob_x = ut.log_normal(x, self.dec(y, z), 0.1 * torch.ones(x.shape)) # logp_\theta(x | y, z)
+
+        # calc rec
+        rec = -torch.mean(log_prob_x)
+
+        # calc kl
+        # D_{KL}(q\phi(z|x, y) || p(z))
+        kl = torch.mean(ut.kl_normal(m_z, v_z, torch.ones_like(z) * self.z_prior_m, torch.ones_like(z) * self.z_prior_v))
+        
+        nelbo = kl + rec
+        return nelbo, kl, rec
         ### END CODE HERE ###
         ################################################################################
         # End of code modification

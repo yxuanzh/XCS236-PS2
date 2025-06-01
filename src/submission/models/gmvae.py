@@ -100,6 +100,20 @@ class GMVAE(nn.Module):
         # this object by checking its shape.
         prior = ut.gaussian_parameters(self.z_pre, dim=1)
         ### START CODE HERE ###
+        x_dup = ut.duplicate(x, iw)
+        m_z, v_z = self.enc(x_dup)
+        z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x) # z.shape = (batch * iw, dim_z)
+        log_prob_x_on_z = ut.log_bernoulli_with_logits(x_dup, self.dec(z)) # logp_\theta(x | z)
+        log_prob_real_z = ut.log_normal_mixture(z, *prior) # logp(z)
+        log_prob_x_z = log_prob_x_on_z + log_prob_real_z
+        log_prob_encoded_z = ut.log_normal(z, m_z, v_z) # logq\phi(z | x)
+        log_prob_res = log_prob_x_z - log_prob_encoded_z
+        nelbo = ut.log_mean_exp(log_prob_res.view(-1, iw), 1) # log_prob_res.shape: batch, iw
+
+        niwae = -torch.mean(nelbo)
+        kl =  torch.mean(ut.log_normal(z, m_z, v_z) - ut.log_normal_mixture(z, *prior))
+        rec = -torch.mean(log_prob_x_on_z)
+        return niwae, kl, rec
         ### END CODE HERE ###
         ################################################################################
         # End of code modification
