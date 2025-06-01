@@ -56,7 +56,7 @@ class FSVAE(nn.Module):
         ### START CODE HERE ###
         m_z, v_z = self.enc(x, y)
         z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x, y)
-        log_prob_x = ut.log_normal(x, self.dec(z, y), 0.1 * torch.ones(x.shape)) # logp_\theta(x | z, yz)
+        log_prob_x = ut.log_normal(x, self.dec(z, y), 0.1 * torch.ones_like(x)) # logp_\theta(x | z, yz)
 
         # calc rec
         rec = -torch.mean(log_prob_x)
