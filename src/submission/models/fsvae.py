@@ -56,14 +56,14 @@ class FSVAE(nn.Module):
         ### START CODE HERE ###
         m_z, v_z = self.enc(x, y)
         z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x, y)
-        log_prob_x = ut.log_normal(x, self.dec(z, y), 0.1 * torch.ones_like(x)) # logp_\theta(x | z, yz)
+        log_prob_x = ut.log_normal(x, self.dec(z, y), torch.tensor(0.1).to(x.device).expand(x.shape)) # logp_\theta(x | z, y)
 
         # calc rec
         rec = -torch.mean(log_prob_x)
 
         # calc kl
         # D_{KL}(q\phi(z|x, y) || p(z))
-        kl = torch.mean(ut.kl_normal(m_z, v_z, torch.ones_like(z) * self.z_prior_m, torch.ones_like(z) * self.z_prior_v))
+        kl = torch.mean(ut.kl_normal(m_z, v_z, self.z_prior_m.to(m_z.device).expand(m_z.shape), self.z_prior_v.to(v_z.device).expand(v_z.shape)))
         
         nelbo = kl + rec
         return nelbo, kl, rec

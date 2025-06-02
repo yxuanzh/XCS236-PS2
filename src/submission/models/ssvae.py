@@ -92,7 +92,7 @@ class SSVAE(nn.Module):
         rec_mean = torch.mean(rec)
 
         # calc kl
-        kl_z = ut.kl_normal(m_z, v_z, torch.ones_like(z) * self.z_prior_m, torch.ones_like(z) * self.z_prior_v)
+        kl_z = ut.kl_normal(m_z, v_z, self.z_prior_m.to(m_z.device).expand(m_z.shape), self.z_prior_v.to(v_z.device).expand(v_z.shape))
         weighted_kl_z = torch.einsum("ij,ji->i", y_prob, kl_z.view(self.y_dim, -1)) # \sum_{y \ in Y} q_\phi(y|x) * kl_z; i=batch; j=y_dim
         kl_y = ut.kl_cat(y_prob, y_logprob, -torch.log(torch.tensor(self.y_dim))) # shape: batch
         kl = kl_y + weighted_kl_z

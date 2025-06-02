@@ -52,7 +52,7 @@ class VAE(nn.Module):
         z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x)
         log_prob_x = ut.log_bernoulli_with_logits(x, self.dec(z)) # logp_\theta(x | z)
         rec = -torch.mean(log_prob_x)
-        kl = torch.mean(ut.kl_normal(m_z, v_z, torch.ones_like(z) * self.z_prior_m, torch.ones_like(z) * self.z_prior_v))
+        kl = torch.mean(ut.kl_normal(m_z, v_z, self.z_prior_m.to(m_z.device).expand(m_z.shape), self.z_prior_v.to(v_z.device).expand(v_z.shape)))
         nelbo = kl + rec
         return nelbo, kl, rec
         ### END CODE HERE ###
@@ -94,14 +94,14 @@ class VAE(nn.Module):
         m_z, v_z = self.enc(x_dup)
         z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x) # z.shape = (batch * iw, dim_z)
         log_prob_x_on_z = ut.log_bernoulli_with_logits(x_dup, self.dec(z)) # logp_\theta(x | z)
-        log_prob_real_z = ut.log_normal(z, torch.ones_like(z) * self.z_prior_m, torch.ones_like(z) * self.z_prior_v) # logp(z)
+        log_prob_real_z = ut.log_normal(z, self.z_prior_m.to(z.device).expand(z.shape), self.z_prior_v.to(z.device).expand(z.shape)) # logp(z)
         log_prob_x_z = log_prob_x_on_z + log_prob_real_z
         log_prob_encoded_z = ut.log_normal(z, m_z, v_z) # logq\phi(z | x)
         log_prob_res = log_prob_x_z - log_prob_encoded_z
-        nelbo = ut.log_mean_exp(log_prob_res.view(-1, iw), 1) # log_prob_res.shape: batch, iw
+        iwae = ut.log_mean_exp(log_prob_res.view(-1, iw), 1) # log_prob_res_view.shape: batch, iw
 
-        niwae = -torch.mean(nelbo)
-        kl = torch.mean(ut.kl_normal(m_z, v_z, torch.ones_like(z) * self.z_prior_m, torch.ones_like(z) * self.z_prior_v))
+        niwae = -torch.mean(iwae)
+        kl = torch.mean(ut.kl_normal(m_z, v_z, self.z_prior_m.to(m_z.device).expand(m_z.shape), self.z_prior_v.to(v_z.device).expand(v_z.shape)))
         rec = -torch.mean(log_prob_x_on_z)
         return niwae, kl, rec
         ### END CODE HERE ###
