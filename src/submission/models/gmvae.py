@@ -108,9 +108,9 @@ class GMVAE(nn.Module):
         log_prob_x_z = log_prob_x_on_z + log_prob_real_z
         log_prob_encoded_z = ut.log_normal(z, m_z, v_z) # logq\phi(z | x)
         log_prob_res = log_prob_x_z - log_prob_encoded_z
-        nelbo = ut.log_mean_exp(log_prob_res.view(-1, iw), 1) # log_prob_res.shape: batch, iw
+        iwae = ut.log_mean_exp(log_prob_res.reshape(iw, -1), 0) # log_prob_res.shape: batch, iw
 
-        niwae = -torch.mean(nelbo)
+        niwae = -torch.mean(iwae)
         kl =  torch.mean(ut.log_normal(z, m_z, v_z) - ut.log_normal_mixture(z, *prior))
         rec = -torch.mean(log_prob_x_on_z)
         return niwae, kl, rec

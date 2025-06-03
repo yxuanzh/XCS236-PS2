@@ -89,8 +89,7 @@ def log_normal(x, m, v):
     # the last dimension
     ################################################################################
     ### START CODE HERE ###
-    dist = torch.distributions.multivariate_normal.MultivariateNormal(m, torch.diag_embed(v))
-    return dist.log_prob(x).to(m.device)
+    return torch.sum(- 0.5 * np.log(2*np.pi) - 0.5 * torch.log(v) - 0.5 * (1/v) * (x-m) ** 2, dim=-1).to(x.device)
     ### END CODE HERE ###
     ################################################################################
     # End of code modification
@@ -116,8 +115,8 @@ def log_normal_mixture(z, m, v):
     # in the batch
     ################################################################################
     ### START CODE HERE ###
-    samples_prob = torch.distributions.multivariate_normal.MultivariateNormal(m, torch.diag_embed(v)).log_prob(z.unsqueeze(1)).to(m.device)
-    log_sum_exp_res = torch.logsumexp(samples_prob, dim=1).to(m.device)
+    samples_prob = log_normal(z.unsqueeze(1), m, v).to(m.device)
+    log_sum_exp_res = log_sum_exp(samples_prob, dim=1).to(m.device)
     log_prob = log_sum_exp_res - torch.log(torch.tensor(m.shape[1])).to(m.device)
     return log_prob.to(m.device)
     ### END CODE HERE ###
