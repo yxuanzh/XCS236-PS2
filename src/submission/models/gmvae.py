@@ -62,10 +62,10 @@ class GMVAE(nn.Module):
         m_z, v_z = self.enc(x)
         z = ut.sample_gaussian(m_z, v_z) # z ~ q_\phi(z | x)
         log_prob_x = ut.log_bernoulli_with_logits(x, self.dec(z)) # logp_\theta(x | z)
-        rec = -torch.mean(log_prob_x)
-        kl =  torch.mean(ut.log_normal(z, m_z, v_z) - ut.log_normal_mixture(z, *prior))
+        rec = -log_prob_x
+        kl =  ut.log_normal(z, m_z, v_z) - ut.log_normal_mixture(z, *prior)
         nelbo = kl + rec
-        return nelbo, kl, rec
+        return nelbo.mean(), kl.mean(), rec.mean()
         ### END CODE HERE ###
         ################################################################################
         # End of code modification
